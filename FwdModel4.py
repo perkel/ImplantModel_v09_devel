@@ -8,14 +8,14 @@ import datetime
 import os
 import csv
 import matplotlib.pyplot as plt
-from commonParams import *
+from common_params import *
 
 
 # Needs cleanup
 FASTZ = True  # use an interpolation method along z-axis
 
 # We depend on a voltage and activation tables calculated using
-# voltageCalc.py and saved as a .dat file. the file is specified in commonParams
+# voltage_calc.py and saved as a .dat file. the file is specified in commonParams
 with open(FIELDTABLE, 'rb') as combined_data:
     data = pickle.load(combined_data)
     combined_data.close()
