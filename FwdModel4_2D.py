@@ -20,10 +20,12 @@ import os
 import csv
 import matplotlib.pyplot as plt
 import pickle
-from commonParams import *
+from common_params import *
+import Fig_2D_contour
+import PlotNeuronActivation
 
 # We depend on a voltage and activation tables calculated using
-# voltageCalc.py and saved as a .dat file
+# voltage_calc.py and saved as a .dat file
 with open(FIELDTABLE, 'rb') as combined_data:
     data = pickle.load(combined_data)
     combined_data.close()
@@ -170,4 +172,15 @@ if ifPlot:
     ax3.plot(survVals, thr_sim_db[:, 30, 1], marker='o', color='g')
     titleText = 'Threshold ' + descrip
     ax3.set(xlabel='Survival fraction', ylabel='Threshold tripolar (dB)', title=titleText)
+
+    print('threshold values')
+    survidxs = [4, 9, 11]  # must have length nsurv
+    rposidxs = [9, 19, 29]  # must have length nrpos
+    for i in range(3):
+        for j in range(3):
+            print('rpos: ', rposVals[rposidxs[i]], ' surv: ', survVals[survidxs[j]], '  mp: ',
+                  thr_sim_db[survidxs[j], rposidxs[i], 0], ' tp: ', thr_sim_db[survidxs[j], rposidxs[i], 1])
+
+    Fig_2D_contour.Fig_2D_contour()
+    PlotNeuronActivation.PlotNeuronActivation()
     plt.show()
