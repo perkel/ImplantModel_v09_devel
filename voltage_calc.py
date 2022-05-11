@@ -21,10 +21,10 @@ import scipy.integrate as integ
 import scipy.special as spec
 
 
-def goldwyn_beta(eps, k, rs, re, n):
-    krs = k * rs
+def goldwyn_beta(eps, k2, rs, re, n):
+    krs = k2 * rs
     denom = ((eps * spec.kvp(n, krs) * spec.iv(n, krs)) - (spec.kn(n, krs) * spec.ivp(n, krs)))
-    return spec.iv(n, k * re) / (denom * krs)
+    return spec.iv(n, k2 * re) / (denom * krs)
 
 
 def goldwyn_phi(eps, k, rs, re, reval, n):
@@ -32,30 +32,46 @@ def goldwyn_phi(eps, k, rs, re, reval, n):
     return phi
 
 
-def integ_func(x, m_max, pratio, radius, reval, z, theta, relec):  # This is the Bessel function along z axis
+def integ_func(x, m_max, pratio, rad, reval, z, theta, relec):  # This is the Bessel function along z axis
     sum_contents = 0.0
     increments = np.zeros(m_max)
     rel_incrs = np.zeros(m_max)
-    for i in range(m_max):
-        if i == 0:
+    for idx in range(m_max):
+        if idx == 0:
             gamma = 1.0
         else:
             gamma = 2.0
 
-        increments[i] = gamma * np.cos(i * theta) * goldwyn_phi(pratio, x, radius, relec, reval, i)
-        sum_contents += increments[i]
-        rel_incrs[i] = np.abs(increments[i]) / sum_contents
+        increments[idx] = gamma * np.cos(idx * theta) * goldwyn_phi(pratio, x, rad, relec, reval, idx)
+        sum_contents += increments[idx]
+        rel_incrs[idx] = np.abs(increments[idx]) / sum_contents
 
     return np.cos(x * z) * sum_contents
 
 
 # See Rubinstein dissertation, 1988, Ch 6.
 
+# Main parameters to vary
+radius = 1.0  # cylinder radius
+res_int = 70.0  # internal resistivity
+res_ext = 250.0  # external resistivity
+output_filename = '22April2022MedResolution_RInt70_zE2_full.dat'
+# changes for streamlining: only 3 y values; MMax 12; intEnd 200; itol 1e-4. Run time dropped from hours (overnight)
+# to ~ 800 s. Need to do quality control
+# Not streamlined with 3 ypos, Mmax = 47, intEnd = 600, itol = 1e-6 runtime was 5100 seconds.
+# streamlined 1: ypos=3; mMax=20; intEnd 600, itol=1e-6.  runtime: 1812 sec
+# streamlined 2: ypos=3; mMax=47; intEnd 200, itol:1e-6. runtime 4022 sec
+# streamlined 3: ypos-3; mMax=47; intEnd 600; itol=1e-4. runtime 3151 sec
+
+# second round. Extend spatial dimension to higher resolution
+# zE2_full: ypos=3; mMax = 47; intEnd = 600; itol=1e-6; runtime 7080 sec
+
+
 pr = cProfile.Profile()
 
 # Field parameters. zEval can be higher (more precise, slower) or lower resolution (less precise, faster)
-fp = {'model': 'cylinder_3d', 'fieldtype': 'Voltage_Activation', 'evaltype': 'SG', 'cylRadius': 1.0,
-      'relec': np.arange(-0.95, 0.951, 0.05), 'resInt': 70.0, 'resExt': 250.0, 'rspace': 1.1, 'theta': 0.0,
+fp = {'model': 'cylinder_3d', 'fieldtype': 'Voltage_Activation', 'evaltype': 'SG', 'cylRadius': radius,
+      'relec': np.arange(-0.95, 0.951, 0.05), 'resInt': res_int, 'resExt': res_ext, 'rspace': 1.1, 'theta': 0.0,
       # 'zEval': (0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3,
       #              1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9,
       #              3.0, 3.2, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 4.0, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7,
@@ -65,60 +81,60 @@ fp = {'model': 'cylinder_3d', 'fieldtype': 'Voltage_Activation', 'evaltype': 'SG
       #              22.0, 24.0, 26.0, 28.0, 30.0, 32.0, 34.0, 36.0, 38.0, 40.0),
       'zEval': (0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2,
                 1.4, 1.6, 1.8, 2.0, 2.4, 2.8, 3.2, 3.6, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0,
-                8.5, 9.0, 9.5, 10.0, 12.0, 14.0, 16.0, 20.0, 30.0, 40.0),
+                8.5, 9.0, 9.5, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 26.0, 28.0, 30.0,
+                32.0, 34.0, 36.0, 38.0, 40.0),
       'mMax': 47, 'intStart': 1e-12, 'intEnd': 600.0, 'reval': 1.1,
       'ITOL': 1e-6, 'runDate': 'rundate', 'runOutFile': 'savefile'}
 
 now = datetime.now()
 date_time = now.strftime("%m/%d/%Y, %H:%M:%S")
 fp['runDate'] = date_time
-fp['runOutFile'] = '20Jan2022MedResolution_RInt70.dat'
+fp['runOutFile'] = output_filename
 
 # Derived values
 resRatio = fp['resInt'] / fp['resExt']
 rPrime = fp['reval']
 nZ = len(fp['zEval'])  # this may be a problem if zEval is just a scalar
-nYpos = 7  # # of values to calculate across the y dimension
+n_ypos = 3  # # of values to calculate across the y dimension
 
 rElecRange = fp['relec']
 nRElec = len(rElecRange)
-voltageVals = np.empty((nRElec, nYpos, nZ))
+voltageVals = np.empty((nRElec, n_ypos, nZ))
 activationVals = np.empty((nRElec, nZ))
 if_plot = False
 
 pr.enable()  # Start the profiler
 
+n_yeval = n_ypos // 2  # floor division
+y_inc = 0.01  # 10 microns
+yVals = np.arange(-n_yeval * y_inc, n_yeval * (y_inc * 1.01), y_inc)
+transVoltage = np.empty(n_ypos)
+
 # loop on electrode radial positions
 for i, rElec in enumerate(rElecRange):
     # retval = integ_func(1e-12, mMax,resRatio,cylRadius,rPrime,zEval,thisTheta, rElec)
     print('starting electrode position ', i, ' of ', len(rElecRange))
-    # print("vals: ", retval)
-    # print("old vals: ", bessel_func(1e-12, 'V2e', mMax,resRatio,cylRadius,rPrime,zEval,thisTheta, rElec))
 
     # Loop on Z position; but in this streamlined version, keep reval and theta constant
-    for k, thisZ in enumerate(fp['zEval']):
-        print('# ', k, ' of ', nZ, ' z values.')
+    for m, thisZ in enumerate(fp['zEval']):
+        print('# ', m, ' of ', nZ, ' z values.')
         # loop on y positions to get 2nd spatial derivative
-        nYEval = nYpos // 2  # floor division
-        yInc = 0.01  # 10 microns
-        yVals = np.arange(-nYEval * yInc, nYEval * (yInc * 1.01), yInc)
-        transVoltage = np.empty(nYpos)
-        for j, yVal in enumerate(yVals[0:nYEval + 1]):
+        for j, yVal in enumerate(yVals[0:n_yeval + 1]):
             thisTheta = np.arctan(yVal / fp['reval'])
             rPrime = np.sqrt((yVal ** 2) + (fp['reval'] ** 2))
             [itemp, error] = integ.quad(integ_func, fp['intStart'], fp['intEnd'], epsabs=fp['ITOL'], limit=1000,
                                         args=(fp['mMax'], resRatio, fp['cylRadius'], rPrime, thisZ, thisTheta, rElec))
             tempV = itemp / (2 * (np.pi ** 2))
-            voltageVals[i, j, k] = tempV
-            voltageVals[i, nYpos - (j + 1), k] = tempV
+            voltageVals[i, j, m] = tempV
+            voltageVals[i, n_ypos - (j + 1), m] = tempV
             transVoltage[j] = tempV
-            transVoltage[nYpos - (j + 1)] = tempV
+            transVoltage[n_ypos - (j + 1)] = tempV
 
         # Calculate the second spatial derivative in the y dimension
-        transVPrime = np.diff(np.diff(transVoltage)) / (yInc ** 2)
-        activationVals[i, k] = (transVPrime[nYEval - 1])  # Value in center
-        if np.isnan(activationVals[i, k]):
-            print('nan value for i == ', i, " and k == ", k)
+        transVPrime = np.diff(np.diff(transVoltage)) / (y_inc ** 2)
+        activationVals[i, m] = (transVPrime[n_yeval - 1])  # Value in center
+        if np.isnan(activationVals[i, m]):
+            print('nan value for i == ', i, " and m == ", m)
 
 pr.disable()  # stop the profiler
 
