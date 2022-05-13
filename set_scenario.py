@@ -55,6 +55,9 @@ def set_scenario(this_scen, n_elec):
         elif this_scen == 'RampRposSGradual80':
             surv_vals = [0.8, 0.8, 0.6, 0.4, 0.4, 0.6, 0.8, 0.8, 0.8, 0.6, 0.4, 0.4, 0.6, 0.8, 0.8, 0.8]
             rpos_vals = np.arange(0.8, -0.8, -0.1)
+        elif this_scen == 'RampRpos_revSGradual80':
+            surv_vals = [0.8, 0.8, 0.6, 0.4, 0.4, 0.6, 0.8, 0.8, 0.8, 0.6, 0.4, 0.4, 0.6, 0.8, 0.8, 0.8]
+            rpos_vals = np.arange(-0.8, 0.8, 0.1)
         elif this_scen == 'Rpos-03S0_4':
             surv_vals = np.zeros(n_elec) + 0.4
             rpos_vals = np.zeros(n_elec) - 0.3
