@@ -8,12 +8,12 @@ ELEC_BASALPOS = 30
 ESPACE = 1.1  # in mm; 'ELECTRODE' parameters must be vectors
 
 # Neural activation parameters
-THRTARG = 100.0  # number of active neurons = threshold
-TARG_TEXT = '_TARG100/'
-ACTR = 1000.0
-ACTR_TEXT = 'ACTR1000_'
-ACT_STDREL = 0.3
-STD_TEXT = 'STDR0_3'
+THRTARG = 1000.0  # number of active neurons = threshold
+TARG_TEXT = '_TARG1000/'
+ACTR = 500.0
+ACTR_TEXT = 'ACTR500_'
+ACT_STDREL = 0.75
+STD_TEXT = 'STDR0_75'
 
 # File locations
 RES1 = 70.0  # internal resistivity
@@ -40,7 +40,7 @@ NSURVINIT = 1.0
 # scenarios = ['Gradual80R75']
 # scenarios = ['Uniform80R05']
 # scenarios = ['Ramp80Rvariable1']
-scenarios = ['RampRposSGradual80']
+scenarios = ['RampRpos_revSGradual80']
 # scenarios = ['Rpos-03S0_4']
 #  scenarios = ['Ramp80Rvariable1']
 
