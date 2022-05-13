@@ -27,8 +27,9 @@ import load_fwd_csv_data as lcsv
 from scipy import interpolate
 from lmfit import Minimizer, Parameters, report_fit
 import intersection as intsec
-from commonParams import *  # import common values across all models
+from common_params import *  # import common values across all models
 import subject_data
+import PlotInverseResults
 
 # Which variable(s) to fit?
 fit_mode = 'combined'  # alternatives are 'combined', 'rpos' or 'survival'
@@ -41,7 +42,6 @@ SUBJECT = 'S43'
 # For optimizing fit to thresholds need e_field, sim_params, sigvals
 # This is for a single electrode
 def objectivefunc_lmfit(p, sigvals, sim_params, f_par, e_field, thr_goals, this_elec):
-
     nel = len(sim_params['electrodes']['zpos'])
     vals = p.valuesdict()
     show_retval = False
@@ -74,7 +74,6 @@ def objectivefunc_lmfit(p, sigvals, sim_params, f_par, e_field, thr_goals, this_
 # For optimizing fit to thresholds need e_field, sim_params, sigvals
 # This is for all electrodes at once
 def objectivefunc_lmfit_all(par, sigvals, sim_params, f_par, e_field, thr_goals):
-
     # Repack parameters into arrays
     nel = len(sim_params['electrodes']['zpos'])
     vals = par.valuesdict()
@@ -87,8 +86,8 @@ def objectivefunc_lmfit_all(par, sigvals, sim_params, f_par, e_field, thr_goals)
         sim_params['electrodes']['rpos'][i] = myvalue
 
     tempsurv = np.zeros(nel)
-    for i, loopval in enumerate(range(nel, 2*nel)):
-        varname = 'v_%i' % (i+nel)
+    for i, loopval in enumerate(range(nel, 2 * nel)):
+        varname = 'v_%i' % (i + nel)
         myvalue = vals[varname]
         tempsurv[i] = myvalue
 
@@ -102,14 +101,14 @@ def objectivefunc_lmfit_all(par, sigvals, sim_params, f_par, e_field, thr_goals)
     thresh_tp = gT.getThresholds(e_field, f_par, sim_params)
     # Calculate errors
     mp_err = np.nanmean(np.abs(np.subtract(thresh_mp[0], thr_goals['thrmp_db'])))
-    tp_err = np.nanmean(np.abs(np.subtract(thresh_tp[0][1:nel-1], thr_goals['thrtp_db'][1:nel-1])))
+    tp_err = np.nanmean(np.abs(np.subtract(thresh_tp[0][1:nel - 1], thr_goals['thrtp_db'][1:nel - 1])))
     mean_error = (mp_err + tp_err) / 2.0
     if show_retval:
         print('tempsurv[4] = ', tempsurv[4], ' rpos[4]= ', sim_params['electrodes']['rpos'][4],
               ' Mean error (dB) = ', mean_error)
     # retval = np.append(np.subtract(thresh_mp[0], thr_goals['thrmp_db']), 0)
     mp_diff = np.subtract(thresh_mp[0], thr_goals['thrmp_db'])
-    tp_diff = np.subtract(thresh_tp[0][1:nel-1], thr_goals['thrtp_db'][1:nel-1])
+    tp_diff = np.subtract(thresh_tp[0][1:nel - 1], thr_goals['thrtp_db'][1:nel - 1])
     tempzero = np.zeros(1)
     retval = np.concatenate((mp_diff, tempzero, tp_diff, tempzero))
     # Returns a vector of errors, with the first and last of the tripolar errors set to zero
@@ -126,7 +125,7 @@ def find_closest(x1, y1, x2, y2):  # returns indices of the point on each curve 
     min_idx = [0, 0]
     for ii in range(n1):
         for jj in range(n2):
-            dist = np.sqrt((((x1[ii] - x2[jj])/2)**2) + ((y1[ii] - y2[jj])**2))
+            dist = np.sqrt((((x1[ii] - x2[jj]) / 2) ** 2) + ((y1[ii] - y2[jj]) ** 2))
             if dist < min_dist:
                 min_idx = [ii, jj]
                 min_dist = dist
@@ -194,33 +193,33 @@ def inverse_model_combined_se():  # Start this script
         if use_fwd_model:
             [survvals, rposvals] = s_scen.set_scenario(scenario, NELEC)
             csv_file = FWDOUTPUTDIR + 'FwdModelOutput_' + scenario + '.csv'
-            [thrData, ct_data] = lcsv.load_fwd_csv_data(csv_file)
+            [thr_data, ct_data] = lcsv.load_fwd_csv_data(csv_file)
         else:  # use threshold data from a subject
             ELECTRODES['rpos'] = np.zeros(NELEC)
             rposvals = ELECTRODES['rpos']
-            thrData = {'thrmp_db': (subject_data.subj_thr_data(SUBJECT))[0], 'thrmp': [],
-                       'thrtp_db': (subject_data.subj_thr_data(SUBJECT))[1], 'thrtp': [], 'thrtp_sigma': 0.9}
-            thrData['thrtp_db'] = np.insert(thrData['thrtp_db'], 0, np.NaN)
-            thrData['thrtp_db'] = np.append(thrData['thrtp_db'], np.NaN)
+            thr_data = {'thrmp_db': (subject_data.subj_thr_data(SUBJECT))[0], 'thrmp': [],
+                        'thrtp_db': (subject_data.subj_thr_data(SUBJECT))[1], 'thrtp': [], 'thrtp_sigma': 0.9}
+            thr_data['thrtp_db'] = np.insert(thr_data['thrtp_db'], 0, np.NaN)
+            thr_data['thrtp_db'] = np.append(thr_data['thrtp_db'], np.NaN)
 
-            mp_offset_db = np.nanmean(thrData['thrmp_db']) - np.nanmean(mono_thr)
-            tp_offset_db = np.nanmean(thrData['thrtp_db']) - np.nanmean(tripol_thr)
+            mp_offset_db = np.nanmean(thr_data['thrmp_db']) - np.nanmean(mono_thr)
+            tp_offset_db = np.nanmean(thr_data['thrtp_db']) - np.nanmean(tripol_thr)
             overall_offset_db = np.mean([mp_offset_db, tp_offset_db])
-            thrData['thrmp_db'] -= overall_offset_db
-            thrData['thrtp_db'] -= overall_offset_db
+            thr_data['thrmp_db'] -= overall_offset_db
+            thr_data['thrtp_db'] -= overall_offset_db
 
             survvals = np.empty(NELEC)
             survvals[:] = np.nan
             ct_data = {'stdiameter': [], 'scala': [], 'elecdist': [], 'espace': 1.1, 'type': [], 'insrt_base': [],
                        'insert_apex': []}
-            RADIUS = 1.0
-            ct_data['stdiameter'] = RADIUS * 2.0 * (np.zeros(NELEC) + 1.0)
+            radius = 1.0
+            ct_data['stdiameter'] = radius * 2.0 * (np.zeros(NELEC) + 1.0)
 
         #  rposvals = ELECTRODES['rpos']  # save this for later
         saverposvals = rposvals
 
         cochlea_radius = ct_data['stdiameter'] / 2.0
-        if np.isnan(thrData['thrtp_sigma']) or thrData['thrtp_sigma'] < 0.75 or thrData['thrtp_sigma'] > 1:
+        if np.isnan(thr_data['thrtp_sigma']) or thr_data['thrtp_sigma'] < 0.75 or thr_data['thrtp_sigma'] > 1:
             print('The sigma value for the TP configuration is invalid.')
             exit()
 
@@ -240,19 +239,18 @@ def inverse_model_combined_se():  # Start this script
         simParams['channel']['sigma'] = 0.0
         thresholds = np.empty(NELEC)  # Array to hold threshold data for different simulation values
         thresholds[:] = np.nan
-        EField = np.empty(nZ)
-        EField[:] = np.nan
         fitrposvals = np.zeros(NELEC)
         fitsurvvals = np.zeros(NELEC)
         par = Parameters()
+        initvec = []
 
         if fit_mode == 'combined':  # Optimize survival and rpos to match MP and TP thresholds
             # Loop on electrodes, fitting rpos and survival fraction at each location
             nsols = np.zeros(NELEC)  # number of solutions found from the 2D maps
 
-            for i in range(1, NELEC-1):  # Fit params for each electrode (except ends, where there is no tripol value)
-                mptarg = thrData['thrmp_db'][i]
-                tptarg = thrData['thrtp_db'][i]
+            for i in range(1, NELEC - 1):  # Fit params for each electrode (except ends, where there is no tripol value)
+                mptarg = thr_data['thrmp_db'][i]
+                tptarg = thr_data['thrtp_db'][i]
 
                 # Get contours and find intersection to find initial guess for overall fitting
                 fig3, ax3 = plt.subplots()
@@ -342,7 +340,7 @@ def inverse_model_combined_se():  # Start this script
 
                         # do fit, here with the default leastsq algorithm
                         # minner = Minimizer(objectivefunc_lmfit, par, fcn_args=(sigmaVals, simParams,
-                        # fp, act_vals, thrData, i))
+                        # fp, act_vals, thr_data, i))
                         # result = minner.minimize()
                         # which_sols[0, sol] = result.params['rpos_val']
                         # which_sols[1, sol] = result.params['surv_val']
@@ -350,17 +348,14 @@ def inverse_model_combined_se():  # Start this script
                         rposweight = 2
                         survweight = 0.0
                         if i > 1:  # calculate distance from previous coords
-                            which_sols[3, sol] = np.sqrt(rposweight*(rp_guess - fitrposvals[i-1])**2 +
-                                                         survweight*(sv_guess - fitsurvvals[i-1])**2)
+                            which_sols[3, sol] = np.sqrt(rposweight * (rp_guess - fitrposvals[i - 1]) ** 2 +
+                                                         survweight * (sv_guess - fitsurvvals[i - 1]) ** 2)
 
                     # figure out which is best
                     print("which is best?")
                     # First attempt: pick rpos and surv that are closest to previous electrode (if there is one)
-
-                    closest_idx = np.where(which_sols[3, :] == np.amin(which_sols[3, :]))
-                    if isinstance(closest_idx, tuple):
-                        closest_idx = 1
-
+                    min_val = np.amin(which_sols[3, :])
+                    closest_idx = np.where(which_sols[3, :] == min_val)[0]
                     rp_guess = x[closest_idx]
                     sv_guess = y[closest_idx]
                     print('Closest is # ', closest_idx, ' , and guesses are: ', rp_guess, sv_guess)
@@ -368,18 +363,6 @@ def inverse_model_combined_se():  # Start this script
 
                     ax_guess = plt.plot(rp_guess, sv_guess, 'x')
 
-            # Put guesses into Parameters
-            #     par.add('rpos_val',  value=rp_guess, min=-0.8, max=0.8)
-            #     par.add('surv_val', value=sv_guess, min=0.2, max=0.9)
-            #
-            #     # do fit, here with the default leastsq algorithm
-            #     # def objectivefunc_lmfit(p, sigvals, sim_params, f_par, e_field, thr_goals, this_elec)
-            #     minner = Minimizer(objectivefunc_lmfit, par,
-            #          fcn_args=(sigmaVals, simParams, fp, act_vals, thrData, i))
-            #     result = minner.minimize()
-
-                # fitrposvals[i] = result.params['rpos_val']
-                # fitsurvvals[i] = result.params['surv_val']
                 fitrposvals[i] = rp_guess
                 fitsurvvals[i] = sv_guess
 
@@ -431,7 +414,7 @@ def inverse_model_combined_se():  # Start this script
 
         # Now do the main fitting for all electrodes at once
         minner = Minimizer(objectivefunc_lmfit_all, par, diff_step=0.02, nan_policy='omit',
-                           fcn_args=(sigmaVals, simParams, fp, act_vals, thrData))
+                           fcn_args=(sigmaVals, simParams, fp, act_vals, thr_data))
         if use_fwd_model:
             result = minner.minimize(method='least_squares', diff_step=0.02)
         else:  # use CT data
@@ -458,10 +441,10 @@ def inverse_model_combined_se():  # Start this script
         simParams['channel']['sigma'] = sigmaVals[1]
         thrsimtp = gT.getThresholds(act_vals, fp, simParams)
 
-        errvals = [np.subtract(thrsimmp[0], thrData['thrmp_db']), np.subtract(thrsimtp[0][1:NELEC-1],
-                                                                              thrData['thrtp_db'][1:NELEC-1])]
+        errvals = [np.subtract(thrsimmp[0], thr_data['thrmp_db']), np.subtract(thrsimtp[0][1:NELEC - 1],
+                                                                               thr_data['thrtp_db'][1:NELEC - 1])]
         thrsim = [[thrsimmp[0]], [thrsimtp[0]]]
-        thrtargs = [[thrData['thrmp_db']], [thrData['thrtp_db']]]
+        thrtargs = [[thr_data['thrmp_db']], [thr_data['thrtp_db']]]
 
         if use_fwd_model:
             [survvals, rposvals] = s_scen.set_scenario(scenario, NELEC)
@@ -504,57 +487,12 @@ def inverse_model_combined_se():  # Start this script
 
         # Save values in npy format
         save_file_name = INVOUTPUTDIR + scenario + '_fitResults_' + 'combined'
-        np.save(save_file_name, [sigmaVals, rposvals, survvals, thrsim, thrtargs, [fitrposvals, fitsurvvals],
+        np.save(save_file_name, [sigmaVals, rposvals, survvals, thrsim, thrtargs, initvec, [fitrposvals, fitsurvvals],
                                  rposerrs, survivalerrs])
 
         # Make plots
-        # TODO -- this could be put in a separate file to make specific figures. It could be called from here or
-        #  in a standalone fashion
         if ifPlot:
-            xvals = np.arange(0, NELEC) + 1
-            l_e = NELEC - 1  # last electrode to plot
-
-            # All on one plot
-            figrows = 3
-            figcols = 1
-            fig_consol, axs = plt.subplots(figrows, figcols)
-            fig_consol.set_figheight(9)
-            fig_consol.set_figwidth(7.5)
-            axs[0].plot(xvals[1:l_e], thrsimmp[0][1:l_e], marker='o', color='blue', label='fit')
-            axs[0].plot(xvals[1:l_e], thrData['thrmp_db'][1:l_e], marker='o', color='black', label='desired')
-            axs[0].plot(xvals[1:l_e], thrsimtp[0][1:l_e], marker='s', color='blue')
-            axs[0].plot(xvals[1:l_e], thrData['thrtp_db'][1:l_e], marker='s', color='black')
-            yl = 'Threshold (dB)'
-            if use_fwd_model:
-                title_text = 'Known scenario thresholds: ' + scenario
-            else:
-                title_text = 'Subject thresholds: ' + SUBJECT
-            axs[0].set(xlabel='Electrode number', ylabel=yl, title=title_text)
-            axs[0].legend()
-
-            title_text = 'Fit and actual positions'
-            axs[1].plot(xvals, fitrposvals, marker='o', color='red', label='fit')
-            if use_fwd_model:
-                axs[1].plot(xvals[1:l_e], rposvals[1:l_e], marker='o', color='green', label='desired')
-            else:
-                axs[1].plot(xvals, ct_vals, marker='o', color='green', label='CT')
-
-            axs[1].plot(xvals[1:l_e], initvec[1:l_e], marker='o', color='blue', label='start')
-
-            axs[1].set(xlabel='Electrode number', ylabel='Electrode position (mm)', title=title_text)
-            axs[1].legend()
-
-            title_text = 'Fit survival values'
-            axs[2].plot(xvals, fitsurvvals, marker='o', color='red', label='fit')
-            axs[2].plot(xvals, initvec[NELEC:], marker='o', color='blue', label='start')
-            axs[2].plot(xvals, survvals, marker='o', color='green', label='desired')
-            axs[2].set(xlabel='Electrode number', ylabel='Fit survival value', title=title_text)
-            axs[2].legend()
-            fig_consol.tight_layout()
-
-            # TODO -- could add plots of error (difference between desired/measured and fitted values)
-
-            plt.show()
+            PlotInverseResults.plot_inverse_results()
 
 
 if __name__ == '__main__':
