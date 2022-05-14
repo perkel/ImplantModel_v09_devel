@@ -3,7 +3,7 @@
 # This 2D version uses a single electrode and scans through an arbitrary set of values for survival values and
 # electrode position
 # It is critical to note that the parameter values do not to be tied to the # of electrodes in an implant
-# DJP 7 March 2019
+# David J. Perkel 7 March 2019
 # Translated to python 8 March 2020
 # Reorganizing the code to be more modular and to allow sharing of code
 # with inverse model, for simplicity and reproducibility
