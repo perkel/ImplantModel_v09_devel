@@ -35,7 +35,8 @@ simParams = {'cochlea': COCHLEA, 'electrodes': ELECTRODES, 'channel': CHANNEL, '
 nZ = len(GRID['z'])
 NSURVINIT = 1.0
 
-# Set specific scenarios to study. Not used by the 2D exploration tool. These are left in for convenience
+# Set specific scenarios to run with forward model.
+# Not used by the 2D exploration tool. These are left in for convenience
 # scenarios = ['Gradual80R75']
 # scenarios = ['Uniform80R05']
 # scenarios = ['Ramp80Rvariable1']
@@ -48,23 +49,24 @@ NSURVINIT = 1.0
 # scenarios = ['RampRpos2SGradual80']
 # scenarios = ['RampRposSOneHoleGradual80']
 
-# scenarios = ['Gradual80R00', 'RampRposS80', 'RampRposSGradual80']  # for paper figures
+scenarios = ['Gradual80R00', 'RampRposS80', 'RampRposSGradual80']  # for paper figures
 # scenarios = ['Gradual80R00']
 # scenarios = ['ExtremeHole']
 # scenarios = ['RampRposS80']
 # scenarios = ['RampRposSGradual80']
 # scenarios = ['CustomForECAPFigure']
 
-# Actual subject data
+# Actual subject data. For inverse model only
 # scenarios = ['S40', 'S42']  # paper "good fit" examples
 # scenarios = ['S29', 'S56']  # paper "poor fit" examples
 # all subjects with CT data
-scenarios = ['S22', 'S27', 'S29', 'S38', 'S40', 'S41', 'S42', 'S43', 'S46', 'S47', 'S49R', 'S50', 'S52', 'S53', 'S54',
-            'S55', 'S56', 'S57']
+# scenarios = ['S22', 'S27', 'S29', 'S38', 'S40', 'S41', 'S42', 'S43', 'S46', 'S47', 'S49R', 'S50', 'S52', 'S53', 'S54',
+#             'S55', 'S56', 'S57']
 # scenarios = ['S42', 'S43']
 # File locations
 FWDOUTPUTDIR = 'FWD_OUTPUT/' + ACTR_TEXT + STD_TEXT + TARG_TEXT
 INVOUTPUTDIR = 'INV_OUTPUT/' + ACTR_TEXT + STD_TEXT + TARG_TEXT
 
-FIELDTABLE = '8Sept2022_MedResolution_Rext250_nonans.dat'
+FIELDTABLE='18Feb2023_MedResolution_Rext250_nonans.dat'
+# FIELDTABLE = '8Sept2022_MedResolution_Rext250_nonans.dat'
 # FIELDTABLE = '9Sept2022_MedResolution_Rext6400.dat'

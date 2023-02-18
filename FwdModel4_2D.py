@@ -159,7 +159,9 @@ print('min TP thr:  ', np.min(thr_sim_db[:, :, 1]))
 print('max TP thr:  ', np.max(thr_sim_db[:, :, 1]))
 
 # Save neuron activation data into  a binary file
-np.save(FWDOUTPUTDIR + 'neuronact_rtest_' + STD_TEXT, [survVals, rposVals, neuronact])
+temp0 = [(survVals, rposVals)]
+temp1 = [temp0, neuronact]
+np.savez(FWDOUTPUTDIR + 'neuronact_rtest_' + STD_TEXT, survVals, rposVals, neuronact)
 
 # Plot the results
 if ifPlot:

@@ -54,10 +54,10 @@ def integ_func(x, m_max, pratio, rad, reval, z, theta, relec):  # This is the Be
 
 # Main parameters to vary
 radius = 1.0  # cylinder radius
-res_int = 250.0  # internal resistivity
-res_ext = 6400.0  # external resistivity
+res_int = 70.0  # internal resistivity
+res_ext = 250.0  # external resistivity
 
-output_filename = '9Sept2022_MedResolution_Rext6400.dat'
+output_filename = '18Feb2023_MedResolution_Rext250.dat'
 
 pr = cProfile.Profile()
 
@@ -154,6 +154,11 @@ fp['run_duration'] = ps.total_tt  # Place run duration in field parameters
 with open(fp['runOutFile'], 'wb') as combined_data:
     pickle.dump([fp, voltageVals, activationVals], combined_data)  # Save all data
 combined_data.close()
+
+nan_locs = np.argwhere(np.isnan(activationVals))
+if nan_locs.size != 0:
+    print('WARNING: There are NaN values in the act_vals array at locations: ', nan_locs)
+    print('It is recommended to run remove_nans.py on this data table.')
 
 if if_plot:
     # Some plots that might be helpful

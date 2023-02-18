@@ -58,7 +58,7 @@ def integ_func(x, m_max, pratio, rad, reval, z, theta, relec):  # This is the Be
 # Main parameters to vary
 radius = 1.0  # cylinder radius
 res_int = 70.0  # internal resistivity
-res_ext = 6400.0  # external resistivity
+res_ext = 250.0  # external resistivity
 output_filename = '26Aug2022_medres_using_mpmathintegrator.dat'
 # changes for streamlining: only 3 y values; MMax 12; intEnd 200; itol 1e-4. Run time dropped from hours (overnight)
 # to ~ 800 s. Need to do quality control

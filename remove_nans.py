@@ -6,7 +6,7 @@ import pickle
 import numpy as np
 from scipy import interpolate as interp
 
-FILENAME = '8Sept2022_MedResolution_Rext250.dat'
+FILENAME = '18Feb2023_MedResolution_Rext250.dat'
 OUT_FILENAME = FILENAME[0:-4] + '_nonans.dat'
 with open(FILENAME, 'rb') as combined_data:
     data = pickle.load(combined_data)
