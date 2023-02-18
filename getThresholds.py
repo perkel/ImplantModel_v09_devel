@@ -32,20 +32,20 @@ def getThresholds(fieldTable, fieldParams, sim_params):
     e_field[:] = np.nan
 
     if nelec == 1:
-        elecVals = range(3, 4)  # use electrode 3 to be in middle of cochlear length
+        elec_vals = range(3, 4)  # use electrode 3 to be in middle of cochlear length
     else:
         if sim_params['channel']['sigma'] == 0.0:  # monopolar
-            elecVals = range(0, nelec)
+            elec_vals = range(0, nelec)
         else:
-            elecVals = range(1, nelec - 1)
+            elec_vals = range(1, nelec - 1)
 
     nvalarray = []
-    for j in elecVals:  # Loop on stimulating electrodes
+    for j in elec_vals:  # Loop on stimulating electrodes
         sim_params['channel']['number'] = j
         aprofile = c3dm.cylinder3d_makeprofile(fieldTable, fieldParams, sim_params)
-        e_field = np.zeros(aprofile.shape)
+        # e_field = np.zeros(aprofile.shape)
         # This is the biophysically correct behavior
-        # e_field = abs(aprofile)  # uV^2/mm^2
+        e_field = abs(aprofile)  # uV^2/mm^2
 
         # Try getting rid of sidelobes by setting negative values to zero
         # for kk in range(len(aprofile):
@@ -56,18 +56,15 @@ def getThresholds(fieldTable, fieldParams, sim_params):
         # e_field = aprofile
         # e_field[np.where(aprofile < 0.0)] = 0.0
 
-        for kk in range(len(e_field)):
-            if aprofile[kk] < 0.0:
-                e_field[kk] = 0.0
-            else:
-                e_field[kk] = aprofile[kk]
+        # for kk in range(len(e_field)):
+        #     if aprofile[kk] < 0.0:
+        #         e_field[kk] = 0.0
+        #     else:
+        #         e_field[kk] = aprofile[kk]
 
-        # thresholds[0], fval, ierr, numfunc = opt.fminbound(objectivefunc, 1e-12, sim_params['channel']['current'],
-        #                             args=(e_field, sim_params), xtol=1e-6, maxfun=10000, full_output=True)
-        # The above solver was slow and didn't take advantage of the known monotonicity of the function
-
-        # Try our own solving algorithm
-        error = 20
+        # Use our own solving algorithm; this is clumsy but I couldn't find a solver in scipy.loptimize that took
+        # advantage of the known monotonicity of the function
+        error = 20  # Ensure that the system starts with a large "error"
         target = sim_params['neurons']['thrTarg']
         nextstim = sim_params['channel']['current']
         lastpos = nextstim
@@ -83,7 +80,7 @@ def getThresholds(fieldTable, fieldParams, sim_params):
                     break
                 lastneg = nextstim
                 nextstim = nextstim + ((lastpos - nextstim)/2.0)
-            elif error > fit_precision:
+            elif error > fit_precision:  # decrease stimulus
                 lastpos = nextstim
                 nextstim = nextstim - ((nextstim - lastneg)/2.0)
         if nelec == 1:

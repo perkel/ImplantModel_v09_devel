@@ -4,6 +4,7 @@ import pickle
 import set_scenario as s_scen
 import survFull
 import getThresholds as gT
+import calc_ecap as c_ecap
 import datetime
 import os
 import csv
@@ -23,14 +24,17 @@ with open(FIELDTABLE, 'rb') as combined_data:
 fp = data[0]
 fp['zEval'] = np.array(fp['zEval'])
 vVals = data[1]
-actVals = data[2]
-GRID['table'] = actVals
+act_vals = data[2]
+GRID['table'] = act_vals
 
 COCHLEA['res1'] = fp['resInt'] * np.ones(NELEC)  # Note these values do not match those of Goldwyn et al., 2010
 COCHLEA['res2'] = fp['resExt'] * np.ones(NELEC)  # resistivities are in Ohm*cm (conversion to Ohm*mm occurs later)
 GRID['r'] = fp['rspace']  # only 1 of the 3 cylindrical dimensions can be a vector (for CYLINDER3D_MAKEPROFILE)
 
 ifPlot = True  # Whether to plot the results
+sigmaVals = [0, .9]
+nSig = len(sigmaVals)
+ecap = []
 
 # Automatically create scenarios with uniform conditions across electrode positions
 # We've mostly abandoned this for customized scenarios from set_scenario()
@@ -60,9 +64,8 @@ for scenario in scenarios:
     OUTFILE = FWDOUTPUTDIR + 'FwdModelOutput_' + scenario + '.csv'
 
     # Additional setup
-    COCHLEA['timestamp'] = datetime.datetime.now()
-    ELECTRODES['timestamp'] = datetime.datetime.now()
-    CHANNEL['timestamp'] = datetime.datetime.now()
+    RUN_INFO['scenario'] = scenario
+    RUN_INFO['run_time'] = datetime.datetime.now()
     COCHLEA['radius'] = np.ones(NELEC) * fp['cylRadius']  # note that '.rpos' is in mm, must fit inside the radius
 
     # Construct the simParams structure
@@ -70,6 +73,7 @@ for scenario in scenarios:
     simParams['electrodes'] = ELECTRODES
     simParams['channel'] = CHANNEL
     simParams['grid'] = GRID
+    simParams['run_info'] = RUN_INFO
 
     nZ = len(GRID['z'])  # Convenience variable
 
@@ -79,12 +83,10 @@ for scenario in scenarios:
     # routine. Also note this works much faster when the field calculations are performed with a look-up table.
     avec = np.arange(0, 1.01, .01)  # create the neuron count to neuron spikes transformation
     rlvec = NEURONS['coef'] * (avec ** 2) + (1 - NEURONS['coef']) * avec
-    rlvec = 100 * (rlvec ** NEURONS['power'])
+    rlvec = NEURONS['neur_per_clust'] * (rlvec ** NEURONS['power'])
     rlvltable = np.stack((avec, rlvec))  # start with the e-field(s) created above, but remove the current scaling
 
     # Specify which variables to vary and set up those arrays
-    sigmaVals = [0, .9]
-    nSig = len(sigmaVals)
     thr_sim_db = np.empty((NELEC, nSig))  # Array for threshold data for different stim elecs and diff sigma values
     thr_sim_db[:] = np.nan
 
@@ -100,7 +102,10 @@ for scenario in scenarios:
     # Determine threshold for each value of sigma
     for i in range(0, nSig):  # number of sigma values to test
         simParams['channel']['sigma'] = sigmaVals[i]
-        [thr_sim_db[:, i], neuron_vals] = gT.getThresholds(actVals, fp, simParams)
+        [thr_sim_db[:, i], neuron_vals] = gT.getThresholds(act_vals, fp, simParams)
+        ec_thresh = 1000  # neurons
+        if i == 0:
+            ecap = c_ecap.calc_ecap(act_vals, fp, simParams, ec_thresh, thr_sim_db[:, i])
 
     # Write a csv file
     with open(OUTFILE, mode='w') as data_file:
@@ -109,17 +114,41 @@ for scenario in scenarios:
             data_writer.writerow([row, survVals[row], ELECTRODES['rpos'][row], thr_sim_db[row, 0], thr_sim_db[row, 1]])
     data_file.close()
 
-    np.save(FWDOUTPUTDIR + 'simParams' + scenario, simParams)
+    # Save simParams
+    # np.save(FWDOUTPUTDIR + 'simParams' + scenario, simParams, allow_pickle=True)
+    spname = FWDOUTPUTDIR + 'simParams' + scenario
+    with open(spname + '.pickle', 'wb') as f:
+        pickle.dump(simParams, f, pickle.HIGHEST_PROTOCOL)
     # Note that this is saving only the last simParams structure from the loops on sigma and in getThresholds.
+
+    # Save ecap
+    np.save(FWDOUTPUTDIR + 'ecap_' + scenario, ecap)
+    # Now as CSV
+    ecap_csv_name = FWDOUTPUTDIR + 'Dist1_5_low_density.csv'
+    with open(ecap_csv_name, mode='w') as data_file:
+        data_writer = csv.writer(data_file, delimiter=',', quotechar='"')
+        data_writer.writerow(ecap[7, :, 0])  # 7 is for middle electrode
+        data_writer.writerow(ecap[7, :, 1])  # 7 is for middle electrode
+    data_file.close()
 
     # Plot the results, if desired
     if ifPlot:
-        fig, ax = plt.subplots()
-        ax.plot(np.arange(0, NELEC) + 1, thr_sim_db, marker='o')
+        fig1, ax1 = plt.subplots()
+        ax1.plot(np.arange(0, NELEC) + 1, thr_sim_db, marker='o')
         titleText = 'Threshold ' + scenario
-        ax.set(xlabel='Electrode number', ylabel='Threshold (dB)', title=titleText)
-        plt.show()
+        ax1.set(xlabel='Electrode number', ylabel='Threshold (dB)', title=titleText)
 
+        fig2, ax2 = plt.subplots()
+        lab = []
+        for k in [7]:
+            lab.append('Distance 1.5 mm, 100% neuronal density')
+            lab.append('Distance 0.5 mm, 20% neuronal density')
+            ax2.plot(ecap[k, :, 0], ecap[k, :, 1], '.')
+            ax2.set_xlabel('Stimulus intensity (dB)')
+            ax2.set_ylabel('# neurons activated')
+
+        ax2.legend()
+        plt.show()
 # Save PDF, if desired
 #       legend([simSurv, targetSurv], 'sim', 'target', 'Location', 'north');
 #        print('-dpdf', '-painters', '-bestfit', 'epsFig.pdf');

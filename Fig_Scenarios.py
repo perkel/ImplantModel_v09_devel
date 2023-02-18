@@ -1,30 +1,25 @@
 # Script to make figure showing scenarios for basic implant model paper on forward and inverse models
 
 # Import required packages
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.ticker import IndexLocator
-from matplotlib.lines import Line2D
-from matplotlib.text import OffsetFrom
-
-import numpy as np
 import csv
 from pylab import cm
-from commonParams import *
-import setScenario
+from common_params import *
+import set_scenario
 
 # Set default figure values
-#mpl.rcParams['font.family'] = 'Helvetica'
 plt.rcParams['font.size'] = 16
 plt.rcParams['axes.linewidth'] = 2
 # Generate 2 colors from the 'tab10' colormap
 colors = cm.get_cmap('tab10', 2)
 
-SCENARIOS = ['Gradual80R00', 'RampSurvR03', 'Ramp80Rvariable1', 'RampRposSGradual80']
-nrows = len(SCENARIOS)
+#scenarios = ['Gradual80R00', 'RampSurvR03', 'Ramp80Rvariable1', 'RampRposSGradual80']
+scenarios = ['Gradual80R00', 'RampSurvR03']
+nrows = len(scenarios)
 ncols = 2
-fig, axs = plt.subplots(nrows, ncols, sharex=True, figsize=(10, 8), constrained_layout=True)
-fig.tight_layout(pad=2, w_pad=8, h_pad=3.0)
+fig, axs = plt.subplots(nrows, ncols, sharex='all', figsize=(10, 8))
+fig.tight_layout(pad=5, w_pad=8, h_pad=3.0)
 axs_r = []
 posplot = []
 survplot = []
@@ -34,18 +29,17 @@ survplot = []
 # axs3 = fig2.subplots(nrows, ncols, sharex=True, sharey=True)
 count = 0
 
-for SCENARIO in SCENARIOS:
-    [survVals, ELECTRODES['rpos']] = setScenario.setScenario(SCENARIO, NELEC)
+for scenario in scenarios:
+    [survVals, ELECTRODES['rpos']] = set_scenario.set_scenario(scenario, NELEC)
 
     # Load data
-    datafile = FWDOUTPUTDIR + 'FwdModelOutput_' + SCENARIO + '.csv'
+    datafile = FWDOUTPUTDIR + 'FwdModelOutput_' + scenario + '.csv'
     file = open(datafile)
     numlines = len(file.readlines())
     file.close()
 
     # Declare variables
     electrodes = np.empty(numlines)
-    survVals = np.empty(numlines)
     rpos = np.empty(numlines)
     mono_thr = np.empty(numlines)
     tripol_thr = np.empty(numlines)
@@ -66,16 +60,16 @@ for SCENARIO in SCENARIOS:
     marker_style = dict(color='black', linestyle='none', marker='o',
                         markersize=8, markerfacecoloralt='tab:red')
 
-    axs[row, col].plot(electrodes+1, rpos, 'ok')
+    axs[row, col].plot(electrodes + 1, rpos, 'ok')
     temp_axis = axs[row, col].twinx()
-    #axs_r[r]
-    temp_axis.plot(electrodes+1, survVals, 'ok', fillstyle='none', **marker_style)
+    # axs_r[r]
+    temp_axis.plot(electrodes + 1, survVals, fillstyle='none', **marker_style)
     temp_axis.set_ylabel('Survival frac.')
     temp_axis.spines['right'].set_visible(False)
     temp_axis.spines['top'].set_visible(False)
     temp_axis.set_ylim((0.1, 0.9))
     axs[row, col].xaxis.set_major_locator(IndexLocator(base=15, offset=0))
-    if row == nrows-1:
+    if row == nrows - 1:
         axs[row, col].set(xlabel='Electrode number')
 
     axs[row, col].set(ylabel='El. pos. (mm)')
@@ -83,17 +77,16 @@ for SCENARIO in SCENARIOS:
     axs[row, col].spines['top'].set_visible(False)
     axs[row, col].set_ylim((-0.8, 0.8))
 
-
     col = 1  # Plot Threshold data
-    axs[row, col].plot(electrodes+1, mono_thr, 'ok', label = 'Monopolar')
-    axs[row, col].plot(electrodes+1, tripol_thr, 'ob', label = 'Tripolar')
-    # axs[row, col].set_title(SCENARIO)
-    axs[row, col].annotate(SCENARIO, (0.5, 0.26 + (0.24*row)), xycoords='figure fraction',
-                 horizontalalignment='center', fontsize=24)
+    axs[row, col].plot(electrodes + 1, mono_thr, 'ok', label='Monopolar')
+    axs[row, col].plot(electrodes + 1, tripol_thr, 'ob', label='Tripolar')
+    # axs[row, col].set_title(scenario)
+    axs[row, col].annotate(scenario, (0.5, 0.9 - (0.85*(row/nrows))), xycoords='figure fraction',
+                           horizontalalignment='center', fontsize=18)
     axs[row, col].spines['right'].set_visible(False)
     axs[row, col].spines['top'].set_visible(False)
-    #axs[row, col].set_xlim(-0.9, 0.9)
-    if row == nrows-1:
+    # axs[row, col].set_xlim(-0.9, 0.9)
+    if row == nrows - 1:
         axs[row, col].set(xlabel='Electrode number')
     if col == 1:
         axs[row, col].set(ylabel='Threshold (dB)')
@@ -101,7 +94,7 @@ for SCENARIO in SCENARIOS:
     # axs2[row, col].plot(electrodes, rpos, 'ok')
     # axs3[row, col] = axs2[row, col].twinx()
     # axs3[row, col].plot(electrodes, survVals, 'ob')
-    # axs2[row, col].set_title(SCENARIO)
+    # axs2[row, col].set_title(scenario)
     # #axs2[row, col].spines['right'].set_visible(False)
     # axs2[row, col].spines['top'].set_visible(False)
     # #axs[row, col].set_xlim(-0.9, 0.9)
@@ -116,7 +109,6 @@ for SCENARIO in SCENARIOS:
 plt.savefig('Fig_Scenarios.pdf', format='pdf')
 
 plt.show()
-
 
 # # Add legend to plot
 # ax.legend(bbox_to_anchor=(1, 1), loc=1, frameon=False, fontsize=16)

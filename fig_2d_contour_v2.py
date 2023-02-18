@@ -4,6 +4,7 @@
 import matplotlib.pyplot as plt
 from matplotlib.cm import ScalarMappable
 import matplotlib as mpl
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import csv
 from scipy import interpolate
 import intersection as intsec
@@ -86,12 +87,12 @@ def fig_2D_contour():
     n_levels = 100
     labels = ['P1', 'P2', 'P3', 'P4']
 
-    fig, axs = plt.subplots(2, 2, figsize=(8, 8))
+    fig, axs = plt.subplots(1, 3, figsize=(8, 8), gridspec_kw={'width_ratios': [8, 8, 1]})
     fig.tight_layout(pad=3, w_pad=2, h_pad=2.0)
     #     CS3 = axs[0].contourf(XN, YN, znew_mp, np.arange(all_min, all_max, (all_max-all_min)/n_levels))
     # without interpolation
 
-    CS3 = axs[0, 0].contourf(1 - rpos_vals, surv_vals, mono_thr,
+    CS3 = axs[0].contourf(1 - rpos_vals, surv_vals, mono_thr,
                              np.arange(all_min, all_max, (all_max - all_min) / n_levels),
                              cmap='viridis', extend='both')
     # CS3 = axs[0].contourf(rpos_vals, surv_vals, mono_thr, cmap='hot')
@@ -99,26 +100,26 @@ def fig_2D_contour():
     high_rpos_val = 0.5
     low_surv_val = 0.4
     high_surv_val = 0.8
-    axs[0, 0].set_xlabel('Electrode distance (mm)')
-    axs[0, 0].set_ylabel('Fractional neuronal density')
-    axs[0, 0].set_title('Monopolar', fontsize=12)
+    axs[0].set_xlabel('Electrode distance (mm)')
+    axs[0].set_ylabel('Fractional neuronal density')
+    axs[0].set_title('Monopolar', fontsize=12)
     lab_shift = 0.025
-    axs[0, 0].text(1 - high_rpos_val + lab_shift, high_surv_val, labels[0], horizontalalignment='left',
+    axs[0].text(1 - high_rpos_val + lab_shift, high_surv_val, labels[0], horizontalalignment='left',
                    verticalalignment='bottom')
-    axs[0, 0].text(1 - low_rpos_val + lab_shift, high_surv_val, labels[1], horizontalalignment='left',
+    axs[0].text(1 - low_rpos_val + lab_shift, high_surv_val, labels[1], horizontalalignment='left',
                    verticalalignment='bottom')
-    axs[0, 0].text(1 - high_rpos_val + lab_shift, low_surv_val, labels[2], horizontalalignment='left',
+    axs[0].text(1 - high_rpos_val + lab_shift, low_surv_val, labels[2], horizontalalignment='left',
                    verticalalignment='bottom')
-    axs[0, 0].text(1 - low_rpos_val + lab_shift, low_surv_val, labels[3], horizontalalignment='left',
+    axs[0].text(1 - low_rpos_val + lab_shift, low_surv_val, labels[3], horizontalalignment='left',
                    verticalalignment='bottom')
     # axs[0, 0].text(-0.5, 1.0, 'A', fontsize=20)
-    axs[0, 0].plot([np.min(1 - rpos_vals), np.max(1 - rpos_vals)], [high_surv_val, high_surv_val], color='blue')
-    axs[0, 0].plot([np.min(1 - rpos_vals), np.max(1 - rpos_vals)], [low_surv_val, low_surv_val], color='blue',
+    axs[0].plot([np.min(1 - rpos_vals), np.max(1 - rpos_vals)], [high_surv_val, high_surv_val], color='blue')
+    axs[0].plot([np.min(1 - rpos_vals), np.max(1 - rpos_vals)], [low_surv_val, low_surv_val], color='blue',
                    linestyle='dashed')
-    axs[0, 0].plot([1 - low_rpos_val, 1 - low_rpos_val], [np.min(surv_vals), np.max(surv_vals)], color='black',
+    axs[0].plot([1 - low_rpos_val, 1 - low_rpos_val], [np.min(surv_vals), np.max(surv_vals)], color='black',
                    linestyle='dashed')
-    axs[0, 0].plot([1 - high_rpos_val, 1 - high_rpos_val], [np.min(surv_vals), np.max(surv_vals)], color='black')
-    axs[0, 0].set_xticks([0.4, 0.8, 1.2, 1.6])
+    axs[0].plot([1 - high_rpos_val, 1 - high_rpos_val], [np.min(surv_vals), np.max(surv_vals)], color='black')
+    axs[0].set_xticks([0.4, 0.8, 1.2, 1.6])
 
     #    axs[0].plot([0.5, 0.5, 1.5, 1.5], [0.5, 0.8, 0.8, 0.5], 'ok', mfc='none')
     # cax, kw = mpl.colorbar.make_axes([ax for ax in axs.flat])
@@ -129,30 +130,29 @@ def fig_2D_contour():
     # cbar3.add_lines(CS3)
     # fig4, ax4 = plt.subplots()
     #     CS4 = axs[1].contourf(XN, YN, znew_tp, np.arange(all_min, all_max, (all_max-all_min)/n_levels))
-    cs4 = axs[0, 1].contourf(1 - rpos_vals, surv_vals, tripol_thr,
+    cs4 = axs[1].contourf(1 - rpos_vals, surv_vals, tripol_thr,
                              np.arange(all_min, all_max, (all_max - all_min) / n_levels),
                              cmap='viridis', extend='both')
-    axs[0, 1].set_title('Tripolar', fontsize=12)
-    axs[0, 1].set_xlabel('Electrode distance (mm)')
-    axs[0, 1].text(1 - high_rpos_val + lab_shift, high_surv_val, labels[0], horizontalalignment='left',
+    axs[1].set_title('Tripolar', fontsize=12)
+    axs[1].set_xlabel('Electrode distance (mm)')
+    axs[1].text(1 - high_rpos_val + lab_shift, high_surv_val, labels[0], horizontalalignment='left',
                    verticalalignment='bottom')
-    axs[0, 1].text(1 - low_rpos_val + lab_shift, high_surv_val, labels[1], horizontalalignment='left',
+    axs[1].text(1 - low_rpos_val + lab_shift, high_surv_val, labels[1], horizontalalignment='left',
                    verticalalignment='bottom')
-    axs[0, 1].text(1 - high_rpos_val + lab_shift, low_surv_val, labels[2], horizontalalignment='left',
+    axs[1].text(1 - high_rpos_val + lab_shift, low_surv_val, labels[2], horizontalalignment='left',
                    verticalalignment='bottom')
-    axs[0, 1].text(1 - low_rpos_val + lab_shift, low_surv_val, labels[3], horizontalalignment='left',
+    axs[1].text(1 - low_rpos_val + lab_shift, low_surv_val, labels[3], horizontalalignment='left',
                    verticalalignment='bottom')
-    axs[0, 1].plot([np.min(1 - rpos_vals), np.max(1 - rpos_vals)], [high_surv_val, high_surv_val], color='red')
-    axs[0, 1].plot([np.min(1 - rpos_vals), np.max(1 - rpos_vals)], [low_surv_val, low_surv_val], color='red',
+    axs[1].plot([np.min(1 - rpos_vals), np.max(1 - rpos_vals)], [high_surv_val, high_surv_val], color='red')
+    axs[1].plot([np.min(1 - rpos_vals), np.max(1 - rpos_vals)], [low_surv_val, low_surv_val], color='red',
                    linestyle='dashed')
-    axs[0, 1].plot([1 - low_rpos_val, 1 - low_rpos_val], [np.min(surv_vals), np.max(surv_vals)], color='gray',
+    axs[1].plot([1 - low_rpos_val, 1 - low_rpos_val], [np.min(surv_vals), np.max(surv_vals)], color='gray',
                    linestyle='dashed')
-    axs[0, 1].plot([1 - high_rpos_val, 1 - high_rpos_val], [np.min(surv_vals), np.max(surv_vals)], color='gray')
-    axs[0, 1].set_xticks([0.4, 0.8, 1.2, 1.6])
+    axs[1].plot([1 - high_rpos_val, 1 - high_rpos_val], [np.min(surv_vals), np.max(surv_vals)], color='gray')
+    axs[1].set_xticks([0.4, 0.8, 1.2, 1.6])
 
     # Make colorbar
-    # norm = mpl.colors.Normalize(vmin=20, vmax=80)
-    # cbar = fig.colorbar(cs4, ax=axs[0, 1], ticks=range(25, 80, 25))
+    cbar = fig.colorbar(cs4, ax=axs[2], ticks=range(25, 80, 25))
 
     # ax4.set_ylabel('Survival fraction')
     # cbar4 = fig4.colorbar(CS4)
@@ -171,23 +171,24 @@ def fig_2D_contour():
     low_surv_idx = np.argmin(np.abs(surv_vals - low_surv_val))
     high_surv_idx = np.argmin(np.abs(surv_vals - high_surv_val))
 
-    axs[1, 0].plot(1 - rpos_vals, mono_thr[high_surv_idx, :], color='blue', linestyle='solid')
-    axs[1, 0].plot(1 - rpos_vals, tripol_thr[high_surv_idx, :], color='red', linestyle='solid')
-    axs[1, 0].plot(1 - rpos_vals, mono_thr[low_surv_idx, :], color='blue', linestyle='dashed')
-    axs[1, 0].plot(1 - rpos_vals, tripol_thr[low_surv_idx, :], color='red', linestyle='dashed')
-    axs[1, 0].axes.set_xlabel('Electrode distance (mm)')
-    axs[1, 0].axes.set_ylabel('Threshold (dB)')
-    axs[1, 0].axes.set_xlim([0.1, 1.9])
-    axs[1, 0].axes.set_ylim([10, 75])
-    axs[1, 0].set_xticks([0.4, 0.8, 1.2, 1.6])
-
-    axs[1, 1].plot(surv_vals, mono_thr[:, high_rpos_idx], color='black', linestyle='solid')
-    axs[1, 1].plot(surv_vals, tripol_thr[:, high_rpos_idx], color='gray', linestyle='solid')
-    axs[1, 1].plot(surv_vals, mono_thr[:, low_rpos_idx], color='black', linestyle='dashed')
-    axs[1, 1].plot(surv_vals, tripol_thr[:, low_rpos_idx], color='gray', linestyle='dashed')
-    axs[1, 1].axes.set_xlabel('Fractional neuronal density')
-    axs[1, 1].axes.set_xlim([0.1, 0.9])
-    axs[1, 1].axes.set_ylim([10, 75])
+    # Lower panels or perhaps new figure
+    # axs[1, 0].plot(1 - rpos_vals, mono_thr[high_surv_idx, :], color='blue', linestyle='solid')
+    # axs[1, 0].plot(1 - rpos_vals, tripol_thr[high_surv_idx, :], color='red', linestyle='solid')
+    # axs[1, 0].plot(1 - rpos_vals, mono_thr[low_surv_idx, :], color='blue', linestyle='dashed')
+    # axs[1, 0].plot(1 - rpos_vals, tripol_thr[low_surv_idx, :], color='red', linestyle='dashed')
+    # axs[1, 0].axes.set_xlabel('Electrode distance (mm)')
+    # axs[1, 0].axes.set_ylabel('Threshold (dB)')
+    # axs[1, 0].axes.set_xlim([0.1, 1.9])
+    # axs[1, 0].axes.set_ylim([10, 75])
+    # axs[1, 0].set_xticks([0.4, 0.8, 1.2, 1.6])
+    #
+    # axs[1, 1].plot(surv_vals, mono_thr[:, high_rpos_idx], color='black', linestyle='solid')
+    # axs[1, 1].plot(surv_vals, tripol_thr[:, high_rpos_idx], color='gray', linestyle='solid')
+    # axs[1, 1].plot(surv_vals, mono_thr[:, low_rpos_idx], color='black', linestyle='dashed')
+    # axs[1, 1].plot(surv_vals, tripol_thr[:, low_rpos_idx], color='gray', linestyle='dashed')
+    # axs[1, 1].axes.set_xlabel('Fractional neuronal density')
+    # axs[1, 1].axes.set_xlim([0.1, 0.9])
+    # axs[1, 1].axes.set_ylim([10, 75])
 
     # axs[2].plot(labels, [mono_thr[high_surv_idx, high_rpos_idx], mono_thr[high_surv_idx, low_rpos_idx],
     #                                    mono_thr[low_surv_idx, high_rpos_idx], mono_thr[low_surv_idx, low_rpos_idx]],
@@ -204,20 +205,9 @@ def fig_2D_contour():
     # axs[2].text(-0.5, 75, 'B', fontsize=20)
     # fig.tight_layout(pad=1, w_pad=2, h_pad=4.0)
 
-    plt.savefig('Fig_2D_contour.eps', format='eps')
+    plt.savefig('Fig_2D_contour.pdf', format='pdf')
 
-# Second figure to get a reasonable colorbar without squishing a contour plot
-    fig3, axs3 = plt.subplots(1, 2)
-    CS5 = axs[0, 0].contourf(1 - rpos_vals, surv_vals, mono_thr,
-                             np.arange(all_min, all_max, (all_max - all_min) / n_levels),
-                             cmap='viridis', extend='both')
-    # Make colorbar
-    norm = mpl.colors.Normalize(vmin=20, vmax=80)
-    cbar = fig.colorbar(CS5, ax=axs3, ticks=range(25, 80, 25))
-    plt.savefig('Fig_2D_contour_colorbar.eps', format='eps')
-
-
-
+    # Now make next figure with example contours
     figrows = 2
     figcols = 2
     fig2, axs2 = plt.subplots(figrows, figcols)
@@ -276,7 +266,6 @@ def fig_2D_contour():
         the_ax.set_xlim([0, 1.9])
         the_ax.text(0.1, 0.8, labels[i], fontsize=16)
 
-    plt.savefig('Fig5_contour_examples.eps', format='eps')
     # fig3, ax4 = plt.subplots()
     # ax4 = plt.contour(1-rpos_vals, surv_vals, mono_thr, [mono_thr[low_surv_idx, high_rpos_idx]],
     #                   colors='green')

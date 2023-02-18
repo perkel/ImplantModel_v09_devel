@@ -21,7 +21,7 @@ import csv
 import matplotlib.pyplot as plt
 import pickle
 from common_params import *
-import Fig_2D_contour
+import fig_2D_contour
 import PlotNeuronActivation
 
 # We depend on a voltage and activation tables calculated using
@@ -49,14 +49,17 @@ SIDELOBE = 1
 ################################
 
 ifPlot = True  # Whether to plot the results
-survVals = np.arange(0.05, 0.96, 0.05)
-rposVals = np.arange(-0.95, 0.96, 0.05)
+survVals = np.arange(0.04, 0.97, 0.02)  # Was 0.02
+rposVals = np.arange(-0.95, 0.96, 0.02)  # Was 0.02
+hires = '_hi_res'
+# survVals = np.arange(0.5, 0.55, 0.1)
+# rposVals = np.arange(0.5, 0.75, 0.05)
 nSurv = len(survVals)
 nRpos = len(rposVals)
 
 # set up filename
 descrip = "surv_" + str(np.min(survVals)) + "_" + str(np.max(survVals)) + "_rpos_" +\
-          str(np.min(rposVals)) + "_" + str(np.max(rposVals))
+          str(np.min(rposVals)) + "_" + str(np.max(rposVals)) + hires
 
 if not os.path.isdir(FWDOUTPUTDIR):
     os.mkdir(FWDOUTPUTDIR)
@@ -84,7 +87,7 @@ nZ = len(GRID['z'])
 # routine. Also note this works much faster when the field calculations are performed with a look-up table.
 avec = np.arange(0, 1.01, .01)  # create the neuron count to neuron spikes transformation
 rlvec = NEURONS['coef'] * (avec ** 2) + (1 - NEURONS['coef']) * avec
-rlvec = 100 * (rlvec ** NEURONS['power'])
+rlvec = NEURONS['neur_per_clust'] * (rlvec ** NEURONS['power'])
 rlvltable = np.stack((avec, rlvec))  # start with the e-field(s) created above, but remove the current scaling
 
 # Specify which variables to vary and set up those arrays
@@ -132,14 +135,14 @@ with open(OUTFILE, mode='w') as data_file:
     data_writer = csv.writer(data_file, delimiter=',', quotechar='"')
     data_writer.writerow(header1)
     data_writer.writerow(header2)
-    for row in range(0, NELEC):
-        data_writer.writerow([row, survVals[row], thr_sim_db[row, 0]])
+    for row, s_val in enumerate(survVals):
+        data_writer.writerow([row, s_val, thr_sim_db[row, 0]])
 
     header1 = 'Tripolar thresholds: rpos values in columns; sigma = ' + str(sigmaVals[-1])
     data_writer.writerow(header1)
     data_writer.writerow(header2)
-    for row in range(0, NELEC):
-        data_writer.writerow([row, survVals[row], thr_sim_db[row, 1]])
+    for row, s_val in enumerate(survVals):
+        data_writer.writerow([row, s_val, thr_sim_db[row, 1]])
 
 data_file.close()
 
@@ -149,8 +152,14 @@ np.savetxt(FWDOUTPUTDIR + 'Tripolar_09_2D_' + STD_TEXT + '.csv', thr_sim_db[:, :
 np.save(FWDOUTPUTDIR + 'simParams' + descrip, simParams)
 # Note that this is saving only the last simParams structure from the loops on sigma and in getThresholds.
 
+# display min and max threshold values
+print('min MP thr:  ', np.min(thr_sim_db[:, :, 0]))
+print('max MP thr:  ', np.max(thr_sim_db[:, :, 0]))
+print('min TP thr:  ', np.min(thr_sim_db[:, :, 1]))
+print('max TP thr:  ', np.max(thr_sim_db[:, :, 1]))
+
 # Save neuron activation data into  a binary file
-np.save(FWDOUTPUTDIR + 'neuronact_' + STD_TEXT, neuronact)
+np.save(FWDOUTPUTDIR + 'neuronact_rtest_' + STD_TEXT, [survVals, rposVals, neuronact])
 
 # Plot the results
 if ifPlot:
@@ -181,6 +190,6 @@ if ifPlot:
             print('rpos: ', rposVals[rposidxs[i]], ' surv: ', survVals[survidxs[j]], '  mp: ',
                   thr_sim_db[survidxs[j], rposidxs[i], 0], ' tp: ', thr_sim_db[survidxs[j], rposidxs[i], 1])
 
-    Fig_2D_contour.Fig_2D_contour()
+    fig_2D_contour.fig_2D_contour()
     PlotNeuronActivation.PlotNeuronActivation()
     plt.show()

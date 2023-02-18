@@ -8,10 +8,9 @@ Created on Mon May 25 20:04:55 2020
 
 import pickle
 import matplotlib.pyplot as plt
+import numpy as np
 
-FILENAME = '4Jan2022HighResolution_RInt70_nonans.dat'
-# FILENAME = '20Jan2022MedResolution_RInt70.dat'
-
+FILENAME = '8Sept2022_MedResolution_Rext250_nonans.dat'
 with open(FILENAME, 'rb') as combined_data:
     data = pickle.load(combined_data)
 combined_data.close()
@@ -20,42 +19,46 @@ fp = data[0]
 v_vals = data[1]
 act_vals = data[2]
 
-
 fig, ax = plt.subplots()
-ax.plot(fp['relec'], act_vals[:, 0], marker='o',)
-ax.set_yscale('log')
-ax.set(xlabel='Electrode position', ylabel='Activation', title='Activation z = 0.0')
-print('fT: ', act_vals[:, 0])
+zpos = [0.0, 0.2, 0.4, 0.6]
+for i, val in enumerate(zpos):  # a few plots for different z positions
+    temparray = np.array(fp['zEval'])
+    zpos_idx = np.argmin(np.abs(temparray - val))
+    yvals = act_vals[:, zpos_idx]
+    ax.plot(1 - fp['relec'], yvals, marker='o',)
 
-# fig, ax2 = plt.subplots()
-# ax2.plot(fp['relec'], v_vals[:, 0, 0],  marker = '*')
-# ax2.set(xlabel='Electrode position', ylabel='Voltage', title='Voltage')
-# print('vT: ', v_vals[:, 0])
-#
-# fig, ax3 = plt.subplots()
-# ax3.plot(fp['relec'], act_vals[:, 10],  marker='*')
-# ax3.set(xlabel='Electrode position', ylabel='Activation', title='Activation z = 1.0')
-#
-# fig, ax4 = plt.subplots()
-# ax4.plot(fp['relec'], act_vals[:, 15],  marker='*')
-# ax4.set(xlabel='Electrode position', ylabel='Activation', title='Activation z = 1.5')
-#
-# fig, ax5 = plt.subplots()
-# ax5.plot(fp['relec'], act_vals[:, 20],  marker='*')
-# ax5.set(xlabel='Electrode position', ylabel='Activation', title='Activation z = 2.0')
-#
-# fig, ax6 = plt.subplots()
-# ax6.plot(fp['zEval'], v_vals[20, 3, :],  marker='*')
-# ax6.set(xlabel='Position along cochlea (mm)', ylabel='Voltage', title='Voltage rElec = 0.0')
-#
-# fig, ax7 = plt.subplots()
-# ax7.plot(fp['zEval'], act_vals[19, :],  color = 'red', marker='o')
-# ax7.set(xlabel='Position along cochlea (mm)', ylabel='Activation', title='Activation rElec = -.5, 0.0, 0.5')
-# ax7.plot(fp['zEval'], act_vals[9, :],  color='blue', marker='o')
-# ax7.plot(fp['zEval'], act_vals[29, :],  color='green', marker='o')
+ax.set(xlabel='Electrode distance (mm)', ylabel='Activation',
+       title='Activation z = ' + str(zpos) + ' ; Rext 6400 Ohm-cm')
+print('Activation values for z = 0.0: ', act_vals[:, 0])
+print('Calculation runtime (s): ', fp['run_duration'])
 
+fig2, ax2 = plt.subplots()  # Activation for radial position 0.0
+rpos = [-0.5, 0.0, 0.5]
+for i, val in enumerate(rpos):
+    rpos_idx = np.argmin(np.abs(fp['relec'] - val))
+    ax2.plot(fp['zEval'], act_vals[rpos_idx, :], marker='o')
 
+ax2.set(xlabel='Z position', ylabel='Activation', title='Activation rpos = ' + str(rpos) + ' ; Rext 250 Ohm-cm')
+ax2.set(xlim=[-1, 10])
 
+# Now do voltage values
+fig3, ax3 = plt.subplots()  # Multiple z positions
+zpos = [0.0, 0.2, 0.4, 0.6]
+for i, val in enumerate(zpos):
+    temparray = np.array(fp['zEval'])
+    idx = np.argwhere(temparray == val)[0]
+    yvals = np.abs(v_vals[:, 1, idx])  # the 1 represents y position == 0.0
+    ax3.plot(1 - fp['relec'], yvals, marker='o',)
+ax3.set(xlabel='Electrode distance (mm)', ylabel='Voltage', title='Voltage z = 0.0, 2.0, 10, 20; Rext 250 Ohm-cm')
 
+fig4, ax4 = plt.subplots()
+for i, val in enumerate(rpos):
+    rpos_idx = np.argmin(np.abs(fp['relec'] - val))
+    ax4.plot(fp['zEval'], np.abs(v_vals[rpos_idx, 1, :]), marker='o')
+ax4.set(xlabel='Z position', ylabel='Voltage', title='Voltage rpos = ' + str(rpos) + ' ; Rext 250 Ohm-cm')
+ax4.set(xlim=[-1, 10])
+
+fig5, ax5 = plt.subplots()
+
+ax5.contourf(fp['zEval'], fp['relec'], act_vals, np.arange(0, 10, 1), cmap='hot')
 plt.show()
-print('done')
